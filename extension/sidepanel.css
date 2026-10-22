@@ -1,0 +1,44 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 13px/1.45 system-ui, sans-serif;
+  background: #f6f7f9;
+  color: #1f2328;
+}
+#app { display: flex; flex-direction: column; gap: 8px; padding: 8px; min-height: 100vh; }
+
+header { display: flex; align-items: center; gap: 6px; }
+#status { flex: 1; color: #57606a; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: #d0d7de; }
+.dot.on { background: #1a7f37; }
+.dot.listening { background: #cf222e; animation: pulse 1.4s infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+.card { background: #fff; border: 1px solid #d0d7de; border-radius: 8px; padding: 10px; }
+.grow { flex: 1; min-height: 160px; display: flex; flex-direction: column; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+h2 { font-size: 13px; margin: 0 0 6px; }
+.muted { color: #57606a; margin: 0 0 6px; }
+label { display: block; margin: 8px 0; }
+label.check { display: flex; gap: 6px; align-items: center; }
+input, select, textarea { width: 100%; font: inherit; padding: 5px 6px; border: 1px solid #d0d7de; border-radius: 6px; }
+label.check input { width: auto; }
+textarea { resize: vertical; }
+button { font: inherit; padding: 4px 10px; border: 1px solid #d0d7de; border-radius: 6px; background: #f6f8fa; cursor: pointer; }
+button:disabled { opacity: 0.5; cursor: default; }
+#overlayToggle.on { background: #1a7f37; color: #fff; border-color: #1a7f37; }
+#toggle:not(:disabled) { background: #1f6feb; color: #fff; border-color: #1f6feb; }
+
+#answer { white-space: pre-wrap; font-size: 14px; }
+#answer.error { color: #cf222e; }
+
+#transcript { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+#transcript li { padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+#transcript li:hover { background: #f6f8fa; }
+#transcript li.question { background: #fff8c5; }
+#transcript li .time { color: #8c959f; font-size: 11px; margin-right: 6px; }
+
+#askForm { display: flex; gap: 6px; }
+#status.error { color: #cf222e; }
+#transcript li .tag { font-size: 10px; padding: 0 5px; margin-right: 6px; border-radius: 8px; background: #eaeef2; color: #57606a; }
+#transcript li.question .tag { background: #d4a72c; color: #fff; }

@@ -1,0 +1,67 @@
+{
+  "name": "meet-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.js",
+  "description": "AI meeting assistant overlay — hidden from screen capture",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test.js",
+    "test:ui": "electron uitest.js",
+    "start:wayland": "electron . --ozone-platform=x11",
+    "listen": "electron . --listen",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "build": {
+    "appId": "com.meet-assistant.app",
+    "productName": "Meet Assistant",
+    "files": [
+      "main.js",
+      "settings.js",
+      "detect.js",
+      "segmenter.js",
+      "renderer.js",
+      "preload.js",
+      "index.html",
+      "overlay.css",
+      "button.html",
+      "button.js",
+      "icons/**",
+      "node_modules/**",
+      "!node_modules/electron/**"
+    ],
+    "extraResources": [
+      { "from": ".env", "to": ".env", "filter": ["**/*"] }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icons/idle.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icons/idle.png",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "icons",
+      "category": "Utility"
+    }
+  },
+  "dependencies": {
+    "openai": "^7.35.0"
+  },
+  "devDependencies": {
+    "electron": "^44.8.0",
+    "electron-builder": "^25.1.8"
+  }
+}

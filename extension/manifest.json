@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Meet Assistant",
+  "version": "0.1.0",
+  "description": "Private side-panel assistant: listens through your microphone (or Google Meet captions), spots questions and drafts answers with OpenAI.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8Hy4Ki7WeAVAqrL9+xIfB7uvwGPnvWm4NVilc5iNVXYfMc/f8Z5qiluSM0YfQPm2iDUry4As1YE6/CPglPDeFPsOvqnh0vEvE4Fp99oF/LCP9TqLKsUYC6EhIJysSgO3U8SFUSi5C0SqnghcbzvmTUwFKfi4ZBKNja6hL+4JUDrJUZ0Kd3mAbRSWa0XEo9ZrLV5zaIlxJ/kJcYHEFQJmcuxcjDd+Zd0wpsYdXPNia71DhaiQC/yIB3S6uRHJmsxOpM/5UvirLRepIRdVGSNfumJMYwj+46IjE/eUJ02M92wy9o2D+bWO77it+MCEiXtNj13CtMnrdcm8kPyeglopgQIDAQAB",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "scripting",
+    "tabs",
+    "nativeMessaging"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/*",
+    "https://meet.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Open Meet Assistant"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://meet.google.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "answer-last": {
+      "suggested_key": {
+        "default": "Alt+Shift+A"
+      },
+      "description": "Answer the latest question"
+    }
+  }
+}

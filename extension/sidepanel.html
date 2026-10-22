@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Meet Assistant</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <main id="app">
+    <header>
+      <span id="dot" class="dot off" title="Captions status"></span>
+      <span id="status">Loading…</span>
+      <button id="toggle" disabled>Start assistant</button>
+      <button id="overlayToggle" title="Turn the transparent overlay screen on or off">Overlay: OFF</button>
+    </header>
+
+    <section id="consent" class="card">
+      <h2>Consent first</h2>
+      <p>Only use this when everyone in the conversation knows an AI assistant is listening.</p>
+      <textarea id="announcement" rows="3">Heads-up: I'm using an AI assistant that reads this meeting's captions to help me take notes and prepare answers. Let me know if you'd prefer I turn it off.</textarea>
+      <button id="copyAnnouncement">Copy to paste in Meet chat</button>
+      <label class="check">
+        <input type="checkbox" id="consentBox" />
+        All participants have been told and agreed
+      </label>
+    </section>
+
+    <section id="answerCard" class="card" hidden>
+      <div class="row">
+        <h2>Answer</h2>
+        <button id="stopAnswer" hidden>Stop</button>
+      </div>
+      <p id="question" class="muted"></p>
+      <div id="answer"></div>
+    </section>
+
+    <section class="card grow">
+      <div class="row">
+        <h2>Transcript</h2>
+        <span>
+          <button id="restart" title="Clear the transcript and answers">Restart</button>
+          <button id="answerLast" title="Alt+Shift+A">Answer last question</button>
+        </span>
+      </div>
+      <p id="partial" class="muted"></p>
+      <ol id="transcript"></ol>
+    </section>
+
+    <form id="askForm" class="card">
+      <input id="askInput" placeholder="Type a question…" autocomplete="off" />
+      <button type="submit">Ask</button>
+    </form>
+
+    <details class="card">
+      <summary>Settings</summary>
+      <label>OpenAI API key
+        <input id="apiKey" type="password" placeholder="sk-proj-..." autocomplete="off" />
+      </label>
+      <label>Listen to
+        <select id="source">
+          <option value="mic">Microphone (speech-to-text)</option>
+          <option value="captions">Google Meet captions</option>
+        </select>
+      </label>
+      <label>Speech language (blank = browser language)
+        <input id="lang" placeholder="en-US" autocomplete="off" />
+      </label>
+      <label>Model
+        <select id="model">
+          <option value="gpt-4o-mini">GPT-4o mini (fast, cheap)</option>
+          <option value="gpt-4o">GPT-4o (better)</option>
+        </select>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="autoAnswer" /> Auto-answer detected questions
+      </label>
+      <label>Background notes (your role, agenda, project details…)
+        <textarea id="notes" rows="6"></textarea>
+      </label>
+      <button id="save" type="button">Save</button>
+      <span id="saved" class="muted"></span>
+    </details>
+  </main>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

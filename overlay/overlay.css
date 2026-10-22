@@ -1,0 +1,457 @@
+/* ============================================================
+   Meet Assistant — overlay styling
+   Rules of the house:
+   - animate only opacity / transform (compositor-only, no relayout)
+   - no text-shadow on the streaming answer body; it repaints every token
+   ============================================================ */
+
+:root {
+  --them: #68a8ff;
+  --me: #b093ff;
+  --ok: #3ddc97;
+  --warn: #f5c04a;
+  --err: #ff7b7b;
+  --ink: #edeef2;
+  --ink-dim: rgba(237, 238, 242, 0.55);
+  --ink-faint: rgba(237, 238, 242, 0.34);
+  --line: rgba(255, 255, 255, 0.08);
+  --field: rgba(255, 255, 255, 0.05);
+  --radius: 16px;
+}
+
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+body {
+  font: 13.5px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+
+/* ---------- shell ---------- */
+
+#panel {
+  --alpha: 0.8;
+  position: relative;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* bottom room is constant so the docked toolbar never shifts the content */
+  padding: 9px 14px 46px;
+  border-radius: var(--radius);
+  background: rgba(13, 15, 20, var(--alpha));
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  contain: layout paint;
+}
+
+#panel.interactive {
+  -webkit-app-region: drag;
+  cursor: grab;
+  border-color: rgba(61, 220, 151, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(61, 220, 151, 0.18);
+}
+#panel.interactive #answer,
+#panel.interactive #tbox,
+#panel.interactive #panel-area,
+#panel.interactive .ibtn { -webkit-app-region: no-drag; }
+
+/* resize grip, bottom-right */
+#panel::after {
+  content: ""; position: absolute; bottom: 5px; right: 5px;
+  width: 11px; height: 11px; opacity: 0.14; pointer-events: none;
+  background:
+    linear-gradient(135deg, transparent 54%, #fff 54%, #fff 60%, transparent 60%),
+    linear-gradient(135deg, transparent 72%, #fff 72%, #fff 78%, transparent 78%);
+}
+#panel.interactive::after { opacity: 0.4; }
+
+/* ---------- status strip ---------- */
+
+#bar {
+  display: flex; align-items: center; gap: 9px;
+  flex-shrink: 0; min-height: 22px;
+}
+
+#dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--ink-faint);
+  flex-shrink: 0;
+  transition: background 0.18s, box-shadow 0.18s;
+}
+#panel.s-listening #dot { background: var(--ok); box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.16); }
+#panel.s-calibrating #dot { background: var(--warn); box-shadow: 0 0 0 3px rgba(245, 192, 74, 0.16); }
+#panel.s-them #dot { background: var(--them); box-shadow: 0 0 0 4px rgba(104, 168, 255, 0.2); animation: pulse 1.1s ease-in-out infinite; }
+#panel.s-me #dot { background: var(--me); box-shadow: 0 0 0 4px rgba(176, 147, 255, 0.2); animation: pulse 1.1s ease-in-out infinite; }
+#panel.s-thinking #dot { background: var(--them); animation: pulse 0.7s ease-in-out infinite; }
+#panel.s-error #dot { background: var(--err); box-shadow: 0 0 0 3px rgba(255, 123, 123, 0.18); }
+
+@keyframes pulse { 50% { opacity: 0.45; } }
+
+/* Short strings get a shadow so they stay legible at low opacity. The answer
+   body deliberately does not: shadowing every glyph of a streaming answer is
+   the single most expensive thing you can ask the rasteriser to do. */
+#state, #question, #hint-title, .tline { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75); }
+
+#state {
+  font-size: 11.5px; font-weight: 500; letter-spacing: 0.01em;
+  color: var(--ink-dim);
+  white-space: nowrap; flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+#panel.s-error #state { color: var(--err); }
+
+/* level meters */
+#meters { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-shrink: 0; }
+#meters[hidden] { display: none; }
+.meter { display: flex; align-items: center; gap: 5px; opacity: 0.85; }
+.meter[hidden] { display: none; }
+.m-label {
+  font-size: 8.5px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+.meter.them .m-label { color: rgba(104, 168, 255, 0.7); }
+.meter.me .m-label { color: rgba(176, 147, 255, 0.7); }
+.m-track {
+  display: block; width: 42px; height: 3px; border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.m-fill {
+  display: block; width: 100%; height: 100%; border-radius: 2px;
+  transform: scaleX(0); transform-origin: left center;
+  background: var(--them);
+  transition: transform 0.07s linear;
+}
+.meter.me .m-fill { background: var(--me); }
+
+/* bar buttons — only reachable while the overlay is interactive */
+#bar-actions { display: none; gap: 5px; flex-shrink: 0; }
+#panel.interactive #bar-actions { display: flex; }
+
+.ibtn {
+  font: inherit; font-size: 11px; font-weight: 500;
+  padding: 3px 10px; border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-dim);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+}
+.ibtn:hover { background: rgba(255, 255, 255, 0.16); color: var(--ink); }
+.ibtn.primary { background: rgba(61, 220, 151, 0.18); color: #9df3cb; }
+.ibtn.primary:hover { background: rgba(61, 220, 151, 0.3); color: #fff; }
+
+/* ---------- answer stage ---------- */
+
+#stage {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  margin-top: 7px;
+}
+#panel.panel-open #stage { display: none; }
+
+#qrow {
+  display: flex; align-items: baseline; gap: 7px;
+  flex-shrink: 0; margin-bottom: 7px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--line);
+}
+#panel.empty #qrow, #panel.empty #answer { display: none; }
+
+.chip {
+  flex-shrink: 0;
+  font-size: 8.5px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px; border-radius: 5px;
+  background: rgba(104, 168, 255, 0.16);
+  color: var(--them);
+  position: relative; top: -1px;
+}
+.chip.me { background: rgba(176, 147, 255, 0.16); color: var(--me); }
+
+#question {
+  flex: 1; min-width: 0;
+  font-size: 13px; font-weight: 500;
+  color: rgba(237, 238, 242, 0.92);
+  /* two lines max, then ellipsis — long questions shouldn't eat the answer */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#answer {
+  flex: 1; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior: contain;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  font-size: 14px; line-height: 1.6;
+  padding-right: 6px;
+  user-select: text; cursor: text;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  contain: paint;
+}
+#answer::-webkit-scrollbar { width: 6px; }
+#answer::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 3px; }
+#answer::-webkit-scrollbar-track { background: transparent; }
+#answer.error { color: var(--err); font-size: 13px; }
+
+/* streaming caret */
+#answer.streaming::after {
+  content: "▍"; color: var(--ok);
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---------- empty state ---------- */
+
+#hints { display: none; }
+#panel.empty #hints {
+  display: flex; flex-direction: column; justify-content: center;
+  flex: 1; min-height: 0; overflow: hidden;
+}
+#hint-title {
+  font-size: 14px; font-weight: 500;
+  color: rgba(237, 238, 242, 0.8);
+  margin-bottom: 9px;
+}
+#hints ul { margin: 0; padding: 0; list-style: none; }
+#hints li {
+  font-size: 11.5px; color: var(--ink-faint);
+  margin-bottom: 4px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+kbd {
+  font: inherit; font-size: 10px; font-weight: 600;
+  padding: 1px 5px; margin-right: 2px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: var(--ink-dim);
+}
+
+/* ---------- live transcript ---------- */
+
+#tbox {
+  flex-shrink: 0;
+  margin-top: 7px; padding-top: 6px;
+  border-top: 1px solid var(--line);
+  max-height: 58px;
+  overflow: hidden;
+}
+#tbox[hidden], #panel.panel-open #tbox { display: none; }
+#tbox:not(.has-lines) { display: none; }
+
+#tlist { display: flex; flex-direction: column; gap: 2px; }
+.tline {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: 11px; line-height: 1.45;
+  color: var(--ink-faint);
+  white-space: nowrap; overflow: hidden;
+}
+.tline:last-child { color: var(--ink-dim); }
+.tline .tw {
+  flex-shrink: 0; font-size: 8px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(104, 168, 255, 0.6);
+  min-width: 26px;
+}
+.tline.me .tw { color: rgba(176, 147, 255, 0.6); }
+.tline .tt { overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- compact mode (small overlay) ---------- */
+
+body.compact #panel { padding: 7px 11px 42px; border-radius: 13px; }
+body.compact #answer { font-size: 12.5px; line-height: 1.5; }
+body.compact #question { font-size: 12px; -webkit-line-clamp: 1; }
+body.compact #tbox { max-height: 34px; }
+body.compact #hints li:nth-child(n + 4) { display: none; }
+body.compact .m-track { width: 26px; }
+body.compact #hint-title { font-size: 12.5px; margin-bottom: 6px; }
+body.tiny #meters, body.tiny #tbox { display: none; }
+body.tiny #state { font-size: 10.5px; }
+
+/* ============================================================
+   Setup / settings panel
+   ============================================================ */
+
+#panel-area {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  margin-top: 8px;
+  user-select: text;
+}
+#panel-area[hidden] { display: none; }
+
+#tab-bar {
+  display: flex; gap: 4px; margin-bottom: 11px; flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+.tab-btn {
+  font: inherit; font-size: 12px; font-weight: 500;
+  padding: 5px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink-faint);
+  border: 0; border-radius: 8px; cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+}
+.tab-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--ink-dim); }
+.tab-btn.active { background: rgba(61, 220, 151, 0.18); color: #9df3cb; }
+.tab-close {
+  font: inherit; font-size: 17px; line-height: 1; margin-left: auto;
+  padding: 3px 9px; background: none;
+  color: var(--ink-faint);
+  border: 0; border-radius: 7px; cursor: pointer;
+  transition: color 0.14s, background 0.14s;
+}
+.tab-close:hover { color: var(--ink); background: rgba(255, 255, 255, 0.08); }
+
+.tab-content {
+  display: none; flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  -webkit-app-region: no-drag;
+  padding-right: 8px;
+}
+.tab-content::-webkit-scrollbar { width: 6px; }
+.tab-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 3px; }
+.tab-content.active { display: flex; flex-direction: column; }
+
+.section-group {
+  margin-bottom: 15px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.section-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.section-title {
+  font-size: 9.5px; text-transform: uppercase;
+  letter-spacing: 0.1em; font-weight: 700;
+  color: var(--ink-faint);
+  margin-bottom: 10px;
+}
+
+#panel-area label {
+  display: block; font-size: 11.5px; font-weight: 500;
+  margin-bottom: 11px;
+  color: var(--ink-dim);
+  -webkit-app-region: no-drag;
+}
+#panel-area label:last-child { margin-bottom: 0; }
+#panel-area label.check {
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; color: rgba(237, 238, 242, 0.78);
+}
+#panel-area label.check input { width: auto; margin: 0; accent-color: var(--ok); cursor: pointer; }
+
+.note {
+  margin: -5px 0 11px;
+  font-size: 10.5px; line-height: 1.45;
+  color: var(--ink-faint);
+}
+.note em { font-style: normal; color: var(--them); }
+
+#panel-area select,
+#panel-area input[type="text"],
+#panel-area textarea {
+  width: 100%; font: inherit; font-size: 12.5px;
+  padding: 7px 10px; margin-top: 5px;
+  background: var(--field);
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition: border-color 0.14s, background 0.14s;
+}
+#panel-area select:hover,
+#panel-area input[type="text"]:hover,
+#panel-area textarea:hover { background: rgba(255, 255, 255, 0.07); }
+#panel-area select:focus,
+#panel-area input[type="text"]:focus,
+#panel-area textarea:focus {
+  border-color: rgba(61, 220, 151, 0.5);
+  background: rgba(255, 255, 255, 0.07);
+  outline: none;
+}
+#panel-area textarea { resize: vertical; min-height: 38px; line-height: 1.5; }
+#panel-area option { background: #15171d; color: var(--ink); }
+
+#panel-area input[type="range"] {
+  width: 100%; margin: 0; accent-color: var(--ok); cursor: pointer;
+}
+.range-row { display: flex; align-items: center; gap: 11px; margin-top: 7px; }
+.range-row input { flex: 1; }
+.range-val {
+  font-size: 10.5px; color: var(--ink-faint);
+  min-width: 44px; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.upload-btn {
+  display: inline-block; font: inherit; font-size: 10.5px;
+  padding: 4px 11px; margin-top: 7px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--ink-dim);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 7px; cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background 0.14s, color 0.14s;
+}
+.upload-btn:hover { background: rgba(255, 255, 255, 0.14); color: var(--ink); }
+
+.panel-actions {
+  display: flex; gap: 8px; margin-top: 13px;
+  flex-shrink: 0; -webkit-app-region: no-drag;
+}
+#panel-save, #panel-cancel {
+  font: inherit; font-size: 12.5px;
+  padding: 8px 26px; border: 0; border-radius: 9px;
+  cursor: pointer; transition: background 0.14s, color 0.14s;
+}
+#panel-save { font-weight: 600; background: rgba(61, 220, 151, 0.85); color: #06211a; }
+#panel-save:hover { background: var(--ok); }
+#panel-cancel { background: rgba(255, 255, 255, 0.07); color: var(--ink-dim); }
+#panel-cancel:hover { background: rgba(255, 255, 255, 0.14); color: var(--ink); }
+
+/* ============================================================
+   Toolbar window (button.html) — fixed size, docked bottom-centre
+   ============================================================ */
+
+#toolbar {
+  display: flex; align-items: center; gap: 3px;
+  width: 100%; height: 100%;
+  box-sizing: border-box;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(13, 15, 20, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.tb-btn {
+  flex: 1; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font: inherit; font-size: 11.5px; font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 0; border-radius: 999px;
+  white-space: nowrap;
+  transition: background 0.14s, color 0.14s;
+}
+.tb-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--ink); }
+.tb-btn:active { transform: scale(0.96); }
+
+#listen { flex: 1.5; background: rgba(61, 220, 151, 0.9); color: #06211a; }
+#listen:hover { background: var(--ok); color: #06211a; }
+#listen.on { background: rgba(255, 90, 90, 0.9); color: #fff; }
+#listen.on:hover { background: rgba(255, 110, 110, 1); }
+
+#answer-now.flash, #capture.flash {
+  background: rgba(61, 220, 151, 0.85); color: #06211a;
+  transition: background 0.4s, color 0.4s;
+}
+#panel-toggle.active { background: rgba(104, 168, 255, 0.85); color: #06182e; }

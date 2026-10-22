@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'" />
+  <link rel="stylesheet" href="overlay.css" />
+</head>
+<body>
+  <div id="panel" class="empty">
+
+    <!-- ---------- status strip ---------- -->
+    <header id="bar">
+      <span id="dot"></span>
+      <span id="state">Idle</span>
+
+      <div id="meters">
+        <div class="meter them" id="m-them" title="Interviewer (system audio)">
+          <span class="m-label">THEM</span>
+          <span class="m-track"><span class="m-fill"></span></span>
+        </div>
+        <div class="meter me" id="m-me" title="You (microphone)">
+          <span class="m-label">YOU</span>
+          <span class="m-track"><span class="m-fill"></span></span>
+        </div>
+      </div>
+
+      <div id="bar-actions">
+        <button id="restart" class="ibtn" title="Clear session (Ctrl+Shift+Backspace)">Clear</button>
+        <button id="done" class="ibtn primary" title="Lock & make click-through (Ctrl+Shift+M)">Done</button>
+      </div>
+    </header>
+
+    <!-- ---------- answer stage ---------- -->
+    <div id="stage">
+      <div id="qrow">
+        <span id="qwho" class="chip them">interviewer</span>
+        <span id="question"></span>
+      </div>
+      <div id="answer"></div>
+
+      <div id="hints">
+        <div id="hint-title">Ready when you are.</div>
+        <ul>
+          <li><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>L</kbd> start / stop listening</li>
+          <li><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>A</kbd> answer the last thing heard</li>
+          <li><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>P</kbd> setup &amp; settings</li>
+          <li><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>M</kbd> move / resize the overlay</li>
+          <li><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>H</kbd> hide · <kbd>T</kbd> transcript</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ---------- live transcript ---------- -->
+    <div id="tbox">
+      <div id="tlist"></div>
+    </div>
+
+    <!-- ---------- setup / settings ---------- -->
+    <div id="panel-area" hidden>
+      <div id="tab-bar">
+        <button class="tab-btn active" data-tab="context">Context</button>
+        <button class="tab-btn" data-tab="audio">Audio</button>
+        <button class="tab-btn" data-tab="general">General</button>
+        <button class="tab-close" id="panel-close" title="Close (Esc)">&times;</button>
+      </div>
+
+      <!-- Context -->
+      <div class="tab-content active" data-tab="context">
+        <div class="section-group">
+          <div class="section-title">This meeting</div>
+          <label>Purpose
+            <textarea id="set-meeting-purpose" rows="2" placeholder="e.g. Technical interview for a backend role at Acme"></textarea>
+          </label>
+        </div>
+        <div class="section-group">
+          <div class="section-title">About you</div>
+          <label>Job role
+            <input id="set-job-role" type="text" placeholder="e.g. Senior Backend Engineer" />
+          </label>
+          <label>Job description
+            <textarea id="set-job-description" rows="3" placeholder="Paste the JD here…"></textarea>
+          </label>
+          <label>Résumé
+            <textarea id="set-resume" rows="4" placeholder="Paste your résumé text, or upload a .txt file"></textarea>
+            <button class="upload-btn" id="upload-resume-btn">Upload .txt</button>
+            <input type="file" id="upload-resume" accept=".txt" hidden />
+          </label>
+        </div>
+      </div>
+
+      <!-- Audio -->
+      <div class="tab-content" data-tab="audio">
+        <div class="section-group">
+          <div class="section-title">Capture</div>
+          <label>Audio source
+            <select id="set-audio-source">
+              <option value="both">Interviewer + you &nbsp;(recommended)</option>
+              <option value="system">Interviewer only (system audio)</option>
+              <option value="mic">Microphone only</option>
+            </select>
+          </label>
+          <p class="note">“Interviewer + you” records two separate tracks, so the assistant knows
+            who asked what and only answers <em>their</em> questions.</p>
+          <label>Microphone
+            <select id="set-mic-device"></select>
+          </label>
+          <label id="sys-device-label">System audio device
+            <select id="set-sys-device"></select>
+          </label>
+          <label class="check"><input id="set-echo-cancel" type="checkbox" checked />
+            Cancel speaker echo on the mic
+          </label>
+          <p class="note">Keep this on. It stops your mic from re-recording the interviewer
+            through your speakers, which is what mixes the two voices together.</p>
+        </div>
+        <div class="section-group">
+          <div class="section-title">Responsiveness</div>
+          <label>Voice sensitivity
+            <div class="range-row">
+              <input id="set-sensitivity" type="range" min="1" max="5" step="1" value="3" />
+              <span class="range-val" id="sensitivity-val">3</span>
+            </div>
+          </label>
+          <p class="note">Raise it if quiet interviewers get missed; lower it if background noise
+            keeps triggering capture.</p>
+          <label>Phrase pause
+            <div class="range-row">
+              <input id="set-pause" type="range" min="400" max="1200" step="50" value="700" />
+              <span class="range-val" id="pause-val">700ms</span>
+            </div>
+          </label>
+          <p class="note">How long a silence ends a phrase. Lower is faster but can cut long
+            questions in half.</p>
+        </div>
+      </div>
+
+      <!-- General -->
+      <div class="tab-content" data-tab="general">
+        <div class="section-group">
+          <div class="section-title">Answering</div>
+          <label class="check"><input id="set-auto-answer" type="checkbox" checked /> Answer questions automatically</label>
+          <label class="check"><input id="set-only-interviewer" type="checkbox" checked /> Only answer the interviewer, never you</label>
+          <label>Minimum gap between answers
+            <div class="range-row">
+              <input id="set-cooldown" type="range" min="0" max="8" step="1" value="1" />
+              <span class="range-val" id="cooldown-val">1s</span>
+            </div>
+          </label>
+        </div>
+        <div class="section-group">
+          <div class="section-title">Models</div>
+          <label>Answer model
+            <input id="set-model" type="text" placeholder="gpt-4o-mini" />
+          </label>
+          <label>Transcribe model
+            <input id="set-transcribe-model" type="text" placeholder="gpt-4o-mini-transcribe" />
+          </label>
+          <label>Spoken language
+            <input id="set-language" type="text" placeholder="en" />
+          </label>
+          <p class="note">A fixed language code is faster and more accurate than auto-detect.
+            Leave blank to auto-detect.</p>
+        </div>
+        <div class="section-group">
+          <div class="section-title">Appearance</div>
+          <label>Opacity
+            <div class="range-row">
+              <input id="set-opacity" type="range" min="30" max="100" step="5" value="80" />
+              <span class="range-val" id="opacity-val">80%</span>
+            </div>
+          </label>
+          <label class="check"><input id="set-show-transcript" type="checkbox" checked /> Show live transcript strip</label>
+        </div>
+      </div>
+
+      <div class="panel-actions">
+        <button id="panel-save">Save</button>
+        <button id="panel-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <script src="segmenter.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
