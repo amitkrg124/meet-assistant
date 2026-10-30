@@ -38,7 +38,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "icons/idle.png"
+      "icon": "icons/app.png"
     },
     "nsis": {
       "oneClick": true,
@@ -47,7 +47,7 @@
     },
     "mac": {
       "target": "dmg",
-      "icon": "icons/idle.png",
+      "icon": "icons/app.png",
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist"
     },
