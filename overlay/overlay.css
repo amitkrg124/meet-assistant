@@ -48,15 +48,11 @@ body {
 }
 
 #panel.interactive {
-  -webkit-app-region: drag;
   cursor: grab;
   border-color: rgba(61, 220, 151, 0.45);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(61, 220, 151, 0.18);
 }
-#panel.interactive #answer,
-#panel.interactive #tbox,
-#panel.interactive #panel-area,
-#panel.interactive .ibtn { -webkit-app-region: no-drag; }
+#panel.interactive #bar { cursor: grab; }
 
 /* resize grip, bottom-right */
 #panel::after {
@@ -430,6 +426,19 @@ body.tiny #state { font-size: 10.5px; }
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
+#grip {
+  flex: 0 0 22px;
+  height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  cursor: grab;
+  color: var(--ink-faint);
+  font-size: 13px;
+  letter-spacing: -0.12em;
+  user-select: none;
+}
+#grip:active { cursor: grabbing; }
+#grip:hover { color: var(--ink); background: rgba(255, 255, 255, 0.08); }
 .tb-btn {
   flex: 1; height: 100%;
   display: flex; align-items: center; justify-content: center;
@@ -455,3 +464,5 @@ body.tiny #state { font-size: 10.5px; }
   transition: background 0.4s, color 0.4s;
 }
 #panel-toggle.active { background: rgba(104, 168, 255, 0.85); color: #06182e; }
+#quit { color: rgba(255, 123, 123, 0.9); }
+#quit:hover { background: rgba(255, 90, 90, 0.9); color: #fff; }

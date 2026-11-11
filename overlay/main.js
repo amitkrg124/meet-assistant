@@ -51,7 +51,7 @@ const MIN_WIDTH = 380;
 const MIN_HEIGHT = 170;
 // Fixed toolbar footprint: #panel reserves exactly this much bottom padding, so
 // content never reflows when the overlay changes state.
-const TOOLBAR = { width: 312, height: 34, gap: 7 };
+const TOOLBAR = { width: 392, height: 34, gap: 7 };
 
 function getToolbarSize() {
   const w = win ? win.getBounds().width : getOverlaySize().width;
@@ -127,7 +127,7 @@ function createWindow() {
     buttonWin?.hide();
     updateTray();
   });
-  win.on("move", placeButton);
+  win.on("move", () => { if (!overlayDrag) placeButton(); });
   win.on("resize", placeButton);
 }
 
@@ -183,6 +183,7 @@ function doPlaceButton() {
 }
 
 let savedBounds = null; // the user's own size, restored when the panel closes
+let overlayDrag = null; // { x, y } cursor offset while the user is moving the overlay
 
 function setInteractive(on) {
   interactive = on;
@@ -542,11 +543,36 @@ function updateTray() {
 // ---------- ipc ----------
 
 ipcMain.on("set-interactive", (_e, on) => setInteractive(on));
+
+// -webkit-app-region: drag does not move transparent frameless windows on
+// Linux (X11/Wayland). Track the cursor in the main process instead.
+ipcMain.on("overlay-drag", (_e, phase) => {
+  if (!win || win.isDestroyed()) return;
+  if (phase === "start") {
+    const cursor = screen.getCursorScreenPoint();
+    const b = win.getBounds();
+    overlayDrag = { x: cursor.x - b.x, y: cursor.y - b.y };
+    return;
+  }
+  if (phase === "end") {
+    overlayDrag = null;
+    placeButton(true);
+    return;
+  }
+  if (phase !== "move" || !overlayDrag) return;
+  const cursor = screen.getCursorScreenPoint();
+  const b = win.getBounds();
+  const next = clampBounds({ ...b, x: cursor.x - overlayDrag.x, y: cursor.y - overlayDrag.y });
+  if (next.x === b.x && next.y === b.y) return;
+  win.setPosition(next.x, next.y);
+  doPlaceButton();
+});
 ipcMain.on("clear", clearAll);
 ipcMain.on("toggle-listening", () => setListening(!listening));
 ipcMain.on("answer-now", answerLast);
 ipcMain.on("toggle-panel", togglePanel);
 ipcMain.on("close-panel", () => { if (panelOpen) togglePanel(); });
+ipcMain.on("quit-app", () => app.quit());
 ipcMain.handle("get-settings", () => getSettings());
 ipcMain.handle("get-platform", () => process.platform);
 

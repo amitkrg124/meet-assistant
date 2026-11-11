@@ -284,6 +284,28 @@ window.overlay.onMessage((msg) => {
 done.addEventListener("click", () => window.overlay.setInteractive(false));
 restart.addEventListener("click", () => window.overlay.clear());
 
+const NO_DRAG = "button, input, textarea, select, a, label, #answer, #tbox, .tab-content";
+panel.addEventListener("pointerdown", (e) => {
+  if (e.button !== 0) return;
+  if (!panel.classList.contains("interactive")) return;
+  if (e.target.closest(NO_DRAG)) return;
+  e.preventDefault();
+  panel.setPointerCapture(e.pointerId);
+  panel.style.cursor = "grabbing";
+  window.overlay.startDrag();
+  const move = () => window.overlay.dragMove();
+  const up = () => {
+    window.overlay.endDrag();
+    panel.style.cursor = "";
+    panel.removeEventListener("pointermove", move);
+    panel.removeEventListener("pointerup", up);
+    panel.removeEventListener("pointercancel", up);
+  };
+  panel.addEventListener("pointermove", move);
+  panel.addEventListener("pointerup", up);
+  panel.addEventListener("pointercancel", up);
+});
+
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !panelArea.hidden) window.overlay.closePanel();
 });
